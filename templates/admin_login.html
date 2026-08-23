@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>TAM Admin Login</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background: #0a0a0f;
+            color: #e0e0ff;
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .login-card {
+            background: #0f0f1a;
+            border: 1px solid #1e1e3a;
+            border-radius: 16px;
+            padding: 40px;
+            width: 100%;
+            max-width: 400px;
+            text-align: center;
+        }
+        .avatar {
+            font-size: 48px;
+            margin-bottom: 16px;
+        }
+        h1 {
+            color: #7aa2f7;
+            margin-bottom: 8px;
+            font-size: 1.5rem;
+        }
+        p {
+            color: #565f89;
+            margin-bottom: 24px;
+            font-size: 0.9rem;
+        }
+        input {
+            width: 100%;
+            padding: 12px 16px;
+            background: #1a1a2e;
+            border: 1px solid #1e1e3a;
+            border-radius: 10px;
+            color: #e0e0ff;
+            font-size: 1rem;
+            margin-bottom: 16px;
+            outline: none;
+            transition: border 0.2s;
+        }
+        input:focus { border-color: #4a3aff; }
+        button {
+            width: 100%;
+            padding: 12px;
+            background: linear-gradient(135deg, #4a3aff, #9d4edd);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 1rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: opacity 0.2s;
+        }
+        button:hover { opacity: 0.85; }
+        .error {
+            background: #ff444422;
+            border: 1px solid #ff4444;
+            color: #ff6666;
+            padding: 10px;
+            border-radius: 8px;
+            margin-bottom: 16px;
+            font-size: 0.9rem;
+        }
+        .back-link {
+            display: block;
+            margin-top: 16px;
+            color: #565f89;
+            text-decoration: none;
+            font-size: 0.85rem;
+        }
+        .back-link:hover { color: #7aa2f7; }
+    </style>
+</head>
+<body>
+    <div class="login-card">
+        <div class="avatar">🔐</div>
+        <h1>TAM Admin Panel</h1>
+        <p>Enter your password to manage TAM's knowledge</p>
+
+        {% if error %}
+        <div class="error">❌ {{ error }}</div>
+        {% endif %}
+
+        <form method="POST">
+            <input
+                type="password"
+                name="password"
+                placeholder="Enter admin password..."
+                autofocus
+            />
+            <button type="submit">🔓 Login to Admin</button>
+        </form>
+
+        <a href="/" class="back-link">← Back to TAM Chatbot</a>
+    </div>
+</body>
+</html>

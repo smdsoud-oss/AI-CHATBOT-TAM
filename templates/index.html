@@ -1,0 +1,829 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>TAM Chatbot</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background: #0a0a0f;
+            color: #e0e0ff;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* ── HEADER ── */
+        .header {
+            background: #0f0f1a;
+            border-bottom: 1px solid #1e1e3a;
+            padding: 14px 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .avatar {
+            width: 42px; height: 42px;
+            border-radius: 12px;
+            background: linear-gradient(135deg, #1e1e3a, #2a1a4a);
+            border: 1px solid #4a3aff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+        }
+
+        .header-title { font-size: 1.1rem; font-weight: 600; color: #7aa2f7; }
+        .header-sub { font-size: 0.75rem; color: #565f89; margin-top: 2px; }
+
+        .header-icons { display: flex; gap: 16px; }
+        .header-icons span {
+            font-size: 18px; cursor: pointer;
+            color: #565f89; transition: color 0.2s;
+        }
+        .header-icons span:hover { color: #7aa2f7; }
+
+        /* ── CHAT BOX ── */
+        #chat-box {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            background: #0a0a0f;
+        }
+
+        #chat-box::-webkit-scrollbar { width: 4px; }
+        #chat-box::-webkit-scrollbar-track { background: transparent; }
+        #chat-box::-webkit-scrollbar-thumb { background: #1e1e3a; border-radius: 4px; }
+
+        .message-row {
+            display: flex;
+            align-items: flex-end;
+            gap: 10px;
+        }
+
+        .message-row.user { flex-direction: row-reverse; }
+
+        .msg-avatar {
+            width: 32px; height: 32px;
+            border-radius: 10px;
+            background: linear-gradient(135deg, #1e1e3a, #2a1a4a);
+            border: 1px solid #4a3aff;
+            display: flex; align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            flex-shrink: 0;
+        }
+
+        .msg-avatar.user-av {
+            background: linear-gradient(135deg, #1a1a3a, #2a1060);
+            border-color: #9d4edd;
+        }
+
+        .msg-content { display: flex; flex-direction: column; gap: 4px; max-width: 75%; }
+        .msg-name { font-size: 11px; color: #565f89; padding: 0 4px; }
+        .message-row.user .msg-name { text-align: right; }
+
+        .message {
+            padding: 12px 16px;
+            border-radius: 16px;
+            font-size: 0.9rem;
+            line-height: 1.6;
+            white-space: pre-wrap;
+            position: relative;
+        }
+
+        .bot-msg {
+            background: #0f0f1a;
+            border: 1px solid #1e1e3a;
+            color: #c0caf5;
+            border-bottom-left-radius: 4px;
+        }
+
+        .user-msg {
+            background: linear-gradient(135deg, #1a1a4a, #2a1060);
+            border: 1px solid #4a3aff44;
+            color: #e0e0ff;
+            border-bottom-right-radius: 4px;
+        }
+
+        .msg-time {
+            font-size: 10px;
+            color: #3b3f5c;
+            padding: 0 4px;
+        }
+
+        .message-row.user .msg-time { text-align: right; }
+
+        /* copy button */
+        .copy-btn {
+            position: absolute;
+            top: 6px; right: 8px;
+            background: none; border: none;
+            color: #3b3f5c; cursor: pointer;
+            font-size: 12px; opacity: 0;
+            transition: opacity 0.2s, color 0.2s;
+        }
+        .message:hover .copy-btn { opacity: 1; }
+        .copy-btn:hover { color: #7aa2f7; }
+
+        /* typing animation */
+        .typing-dots {
+            display: flex; gap: 4px;
+            align-items: center; padding: 4px 0;
+        }
+        .typing-dots span {
+            width: 7px; height: 7px;
+            background: #4a3aff;
+            border-radius: 50%;
+            animation: bounce 1.2s infinite;
+        }
+        .typing-dots span:nth-child(2) { animation-delay: 0.2s; }
+        .typing-dots span:nth-child(3) { animation-delay: 0.4s; }
+
+        @keyframes bounce {
+            0%, 60%, 100% { transform: translateY(0); }
+            30% { transform: translateY(-8px); }
+        }
+
+        /* ── INPUT AREA ── */
+        .input-area {
+            background: #0f0f1a;
+            border-top: 1px solid #1e1e3a;
+            padding: 14px 16px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .voice-btn {
+            width: 40px; height: 40px;
+            border-radius: 12px;
+            background: #1a1a2e;
+            border: 1px solid #1e1e3a;
+            color: #565f89;
+            cursor: pointer;
+            display: flex; align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            transition: all 0.2s;
+            flex-shrink: 0;
+        }
+
+        .voice-btn:hover { border-color: #4a3aff; color: #7aa2f7; }
+        .voice-btn.listening {
+            border-color: #9d4edd;
+            color: #9d4edd;
+            animation: pulse 1s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { box-shadow: 0 0 0 0 #9d4edd44; }
+            50% { box-shadow: 0 0 0 6px #9d4edd11; }
+        }
+
+        #user-input {
+            flex: 1;
+            background: #1a1a2e;
+            border: 1px solid #1e1e3a;
+            border-radius: 12px;
+            padding: 10px 16px;
+            color: #e0e0ff;
+            font-size: 0.9rem;
+            outline: none;
+            transition: border 0.2s;
+        }
+
+        #user-input::placeholder { color: #3b3f5c; }
+        #user-input:focus { border-color: #4a3aff; }
+
+        .send-btn {
+            width: 40px; height: 40px;
+            border-radius: 12px;
+            background: linear-gradient(135deg, #4a3aff, #9d4edd);
+            border: none;
+            color: white;
+            cursor: pointer;
+            display: flex; align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            transition: opacity 0.2s;
+            flex-shrink: 0;
+        }
+
+        .send-btn:hover { opacity: 0.85; }
+
+        /* ── THEME TOGGLE ── */
+        body.light {
+            background: #f5f5ff;
+            color: #1a1a2e;
+        }
+        body.light .header { background: #ffffff; border-color: #e0e0ff; }
+        body.light #chat-box { background: #f5f5ff; }
+        body.light .bot-msg { background: #ffffff; border-color: #e0e0ff; color: #1a1a2e; }
+        body.light .user-msg { background: linear-gradient(135deg, #4a3aff22, #9d4edd22); color: #1a1a2e; }
+        body.light .input-area { background: #ffffff; border-color: #e0e0ff; }
+        body.light #user-input { background: #f0f0ff; border-color: #e0e0ff; color: #1a1a2e; }
+        body.light #user-input::placeholder { color: #9090b0; }
+        body.light .header-title { color: #4a3aff; }
+        body.light .msg-name { color: #9090b0; }
+        body.light .msg-time { color: #b0b0c0; }
+        body.light .voice-btn { background: #f0f0ff; border-color: #e0e0ff; color: #9090b0; }
+        /* ── MOBILE RESPONSIVE ── */
+@media (max-width: 768px) {
+
+    /* Header */
+    .header { padding: 10px 14px; }
+    .header-title { font-size: 1rem; }
+    .header-sub { font-size: 0.7rem; }
+    .avatar { width: 36px; height: 36px; font-size: 16px; }
+    .header-icons { gap: 12px; }
+    .header-icons span { font-size: 16px; }
+
+    /* Chat box */
+    #chat-box { padding: 12px 10px; gap: 12px; }
+
+    /* Messages */
+    .msg-content { max-width: 88%; }
+    .message { padding: 10px 12px; font-size: 0.85rem; }
+    .msg-name { font-size: 10px; }
+    .msg-time { font-size: 9px; }
+    .msg-avatar { width: 28px; height: 28px; font-size: 12px; }
+
+    /* Input area */
+    .input-area { padding: 10px 10px; gap: 8px; }
+    #user-input { padding: 10px 12px; font-size: 0.9rem; }
+    .voice-btn {
+        width: 38px; height: 38px;
+        font-size: 14px;
+    }
+    .send-btn {
+        width: 38px; height: 38px;
+        font-size: 14px;
+    }
+
+    /* Code blocks */
+    pre { font-size: 0.75rem; padding: 10px; }
+    code { font-size: 0.75rem; }
+
+    /* Copy button */
+    .code-copy-btn { opacity: 1; }
+    .copy-btn { opacity: 1; }
+
+    /* Message rows */
+    .message-row { gap: 6px; }
+}
+
+@media (max-width: 480px) {
+
+    /* Extra small phones */
+    .header-sub { display: none; }
+    .msg-content { max-width: 92%; }
+    .message { font-size: 0.82rem; }
+
+    /* Make copy buttons always visible on mobile */
+    .copy-btn { opacity: 1 !important; }
+    .code-copy-btn { opacity: 1 !important; }
+
+    /* Larger tap targets */
+    .voice-btn {
+        width: 42px;
+        height: 42px;
+        border-radius: 50%;
+    }
+    .send-btn {
+        width: 42px;
+        height: 42px;
+        border-radius: 50%;
+    }
+}
+    </style>
+</head>
+<body>
+
+    <!-- HEADER -->
+    <div class="header">
+        <div class="header-left">
+            <div class="avatar">🤖</div>
+            <div>
+                <div class="header-title">TAM</div>
+                <div class="header-sub">Thoughtful Adaptive Mind · <span id="ai-status">✨ Gemini</span></div>
+            </div>
+        </div>
+        <div class="header-icons">
+            <span title="Voice Mode" onclick="toggleVoiceMode()" id="voice-mode-btn">🎙️</span>
+            <span title="Toggle Theme" onclick="toggleTheme()">🌙</span>
+            <span title="Clear Chat" onclick="clearChat()">🗑️</span>
+        </div>
+    </div>
+
+    <!-- CHAT BOX -->
+    <div id="chat-box">
+        <div class="message-row">
+            <div class="msg-avatar">🤖</div>
+            <div class="msg-content">
+                <div class="msg-name">TAM</div>
+                <div class="message bot-msg">
+                    Hey! I'm <strong>TAM</strong> — Thoughtful Adaptive Mind 👋<br><br>
+                    Created by SMS  to help you with anything.<br>
+                    I can solve math, answer questions, help with logic, write code and much more!<br><br>
+                    What would you like to explore? 🚀
+                    <button class="copy-btn" onclick="copyText(this)">📋</button>
+                </div>
+                <div class="msg-time" id="welcome-time"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- INPUT AREA -->
+    <div class="input-area">
+        <input type="file" id="file-input" 
+           accept=".pdf,.docx,.doc,.xlsx,.xls,.csv,.pptx,.ppt,.txt"
+           style="display:none" onchange="uploadFile(this)"/>
+        <button class="voice-btn" title="Upload File" 
+            onclick="document.getElementById('file-input').click()">📎</button>
+        <button class="voice-btn" id="voice-btn" title="Voice Input" onclick="toggleVoice()">🎤</button>
+        <input
+            type="text"
+            id="user-input"
+            placeholder="Type your message..."
+            onkeypress="if(event.key==='Enter') sendMessage()"
+            autocomplete="off"
+            autocorrect="off"
+            autocapitalize="off"
+            spellcheck="false"
+        />
+        <button class="send-btn" onclick="sendMessage()">➤</button>
+    </div>
+
+    <script>
+    document.getElementById('welcome-time').textContent = getTime();
+
+    function getTime() {
+        return new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
+    }
+
+    function linkify(text) {
+    // Handle markdown links [text](url)
+    text = text.replace(/\[([^\]]+)\]\((https?:\/\/[^\)]+)\)/g,
+        '<a href="$2" target="_blank" style="color:#7aa2f7; text-decoration:underline;">$1</a>'
+    );
+
+    // Handle plain URLs
+    text = text.replace(/(https?:\/\/[^\s<"'\)]+)/g, function(url) {
+        // Skip if already inside an <a> tag
+        return '<a href="' + url + '" target="_blank" style="color:#7aa2f7; text-decoration:underline;">' + url + '</a>';
+    });
+
+    return text;
+}
+
+    let fileContent = null;
+    let voiceMode = false;
+    let recognition = null;
+    let listening = false;
+    let isLight = false;
+
+    function addMessage(text, type) {
+        const chatBox = document.getElementById('chat-box');
+        const isBot = type === 'bot';
+        const row = document.createElement('div');
+        row.className = `message-row ${isBot ? '' : 'user'}`;
+
+        row.innerHTML = `
+            <div class="msg-avatar ${isBot ? '' : 'user-av'}">${isBot ? '🤖' : '👤'}</div>
+            <div class="msg-content">
+                <div class="msg-name">${isBot ? 'TAM' : 'You'}</div>
+                <div class="message ${isBot ? 'bot-msg' : 'user-msg'}">
+                    ${isBot ? linkify(text) : text}
+                    ${isBot ? '<button class="copy-btn" onclick="copyText(this)">📋</button>' : ''}
+                </div>
+                <div class="msg-time">${getTime()}</div>
+            </div>
+        `;
+        chatBox.appendChild(row);
+        chatBox.scrollTop = chatBox.scrollHeight;
+    }
+
+    function clearFile() {
+    fileContent = null;
+    addSystemMessage('📎 File removed — Back to normal chat!');
+}
+    function addSystemMessage(text) {
+    const chatBox = document.getElementById('chat-box');
+    const div = document.createElement('div');
+    div.style.cssText = `
+        text-align: center;
+        margin: 8px 0;
+        font-size: 0.78rem;
+        color: #565f89;
+        padding: 6px 12px;
+        background: #1a1a2e;
+        border-radius: 20px;
+        border: 1px solid #1e1e3a;
+        max-width: 70%;
+        margin-left: auto;
+        margin-right: auto;
+    `;
+    div.innerHTML = text;
+    chatBox.appendChild(div);
+    chatBox.scrollTop = chatBox.scrollHeight;
+}
+
+    async function uploadFile(input) {
+        const file = input.files[0];
+        if (!file) return;
+
+        const ext = file.name.split('.').pop().toLowerCase();
+        const icons = {
+            pdf: '📕', docx: '📝', doc: '📝',
+            xlsx: '📊', xls: '📊', csv: '📊',
+            pptx: '📊', ppt: '📊', txt: '📄'
+        };
+        const icon = icons[ext] || '📄';
+
+        addMessage(`${icon} Uploading: <b>${file.name}</b>...`, 'system');
+
+        const formData = new FormData();
+        formData.append('file', file);
+
+        try {
+            const res = await fetch('/upload', {
+                method: 'POST',
+                body: formData
+            });
+            const data = await res.json();
+
+            if (data.success) {
+                fileContent = data.content;
+                console.log("✅ File content saved! Length:", fileContent.length);
+                // Show as user action, not bot message
+                addSystemMessage(`📎 File attached: <b>${data.filename}</b> — Ask TAM anything about it! <span onclick="clearFile()" style="cursor:pointer; color:#ff4444; margin-left:8px;">✖ Remove</span>`);
+            } else {
+                 addSystemMessage(`❌ Upload failed: ${data.error}`);
+            }
+        } catch (err) {
+            addSystemMessage('❌ Upload failed. Please try again.');
+        }
+
+        input.value = '';
+    }
+
+    async function sendMessage() {
+        const input = document.getElementById('user-input');
+        const message = input.value.trim();
+        if (!message) return;
+
+        addMessage(message, 'user');
+        input.value = '';
+
+        console.log("📤 Sending fileContent:", fileContent ? fileContent.length + " chars" : "NULL/EMPTY");
+
+        const chatBox = document.getElementById('chat-box');
+        const row = document.createElement('div');
+        row.className = 'message-row';
+        row.id = 'stream-row';
+        row.innerHTML = `
+            <div class="msg-avatar">🤖</div>
+            <div class="msg-content">
+                <div class="msg-name">TAM</div>
+                <div class="message bot-msg" id="stream-msg">
+                    <div class="typing-dots">
+                        <span></span><span></span><span></span>
+                    </div>
+                </div>
+                <div class="msg-time">${getTime()}</div>
+            </div>
+        `;
+        chatBox.appendChild(row);
+        chatBox.scrollTop = chatBox.scrollHeight;
+
+        try {
+            const res = await fetch('/chat', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    message: message,
+                    file_content: fileContent
+                })
+            });
+
+            const contentType = res.headers.get('content-type');
+            if (contentType && contentType.includes('text/event-stream')) {
+                const reader = res.body.getReader();
+                const decoder = new TextDecoder();
+                const streamMsg = document.getElementById('stream-msg');
+                streamMsg.innerHTML = '';
+                let fullText = '';
+
+                while (true) {
+                    const { done, value } = await reader.read();
+                    if (done) break;
+                    const chunk = decoder.decode(value);
+                    fullText += chunk;
+                    streamMsg.innerHTML = linkify(fullText) +
+                        '<button class="copy-btn" onclick="copyText(this)">📋</button>';
+                    chatBox.scrollTop = chatBox.scrollHeight;
+                }
+
+                if (voiceMode) speakText(fullText);
+
+            } else {
+                const data = await res.json();
+                const streamMsg = document.getElementById('stream-msg');
+                streamMsg.innerHTML = linkify(data.response) +
+                    '<button class="copy-btn" onclick="copyText(this)">📋</button>';
+                if (voiceMode) speakText(data.response);
+            }
+
+            const streamRow = document.getElementById('stream-row');
+            if (streamRow) streamRow.removeAttribute('id');
+            const streamMsgFinal = document.querySelector('#stream-msg');
+            if (streamMsgFinal) streamMsgFinal.removeAttribute('id');
+
+        } catch (err) {
+            document.getElementById('stream-row')?.remove();
+            addMessage('⚠️ Something went wrong. Please try again.', 'bot');
+        }
+
+        chatBox.scrollTop = chatBox.scrollHeight;
+    }
+
+    function copyText(btn) {
+        const msg = btn.parentElement.cloneNode(true);
+        msg.querySelector('.copy-btn')?.remove();
+        const text = msg.innerText.trim();
+        navigator.clipboard.writeText(text).then(() => {
+            btn.textContent = '✅';
+            setTimeout(() => btn.textContent = '📋', 2000);
+        });
+    }
+
+    function clearChat() {
+        const chatBox = document.getElementById('chat-box');
+        chatBox.innerHTML = '';
+        fileContent = null;
+        addMessage('Chat cleared! How can I help you? 🚀', 'bot');
+    }
+
+    function toggleTheme() {
+        isLight = !isLight;
+        document.body.classList.toggle('light', isLight);
+        document.querySelector('.header-icons span').textContent = isLight ? '🌙' : '☀️';
+    }
+
+    function toggleVoiceMode() {
+        voiceMode = !voiceMode;
+        const btn = document.getElementById('voice-mode-btn');
+
+        if (voiceMode) {
+            btn.textContent = '🔴';
+            btn.title = 'Voice Mode ON — click to turn off';
+            addMessage('🎙️ Voice mode ON! I will speak my replies. Click 🔴 to turn off.', 'bot');
+            startVoiceLoop();
+        } else {
+            btn.textContent = '🎙️';
+            btn.title = 'Voice Mode';
+            window.speechSynthesis.cancel();
+            addMessage('🔇 Voice mode OFF. Back to normal text!', 'bot');
+        }
+    }
+
+    function speakText(text) {
+    const clean = text.replace(/[🔢💡🚀👋🤖📋⚠️*#`🎙️🔇🔴]/g, '');
+    const utterance = new SpeechSynthesisUtterance(clean);
+    utterance.lang = 'en-US';
+    utterance.rate = 1.0;
+    utterance.pitch = 1.2;   // Higher pitch = more feminine
+    utterance.volume = 1.0;
+
+    function setFemaleVoice() {
+        const voices = window.speechSynthesis.getVoices();
+
+        // Priority list of female voices
+        const femaleVoiceNames = [
+            'Google US English',        // Chrome female
+            'Microsoft Zira',           // Windows female
+            'Microsoft Jenny',          // Windows female
+            'Microsoft Aria',           // Windows female
+            'Samantha',                 // Mac female
+            'Victoria',                 // Mac female
+            'Karen',                    // Mac female
+            'Moira',                    // Mac female
+            'Veena',                    // Mac Indian female
+            'Google UK English Female', // Chrome UK female
+        ];
+
+        // Find first available female voice
+        let femaleVoice = null;
+        for (const name of femaleVoiceNames) {
+            femaleVoice = voices.find(v => v.name.includes(name));
+            if (femaleVoice) break;
+        }
+
+        // Fallback — find any female voice
+        if (!femaleVoice) {
+            femaleVoice = voices.find(v =>
+                v.name.toLowerCase().includes('female') ||
+                v.name.includes('Zira') ||
+                v.name.includes('Jenny') ||
+                v.name.includes('Aria')
+            );
+        }
+
+        if (femaleVoice) {
+            utterance.voice = femaleVoice;
+            console.log('🎤 Using voice:', femaleVoice.name);
+        }
+
+        window.speechSynthesis.speak(utterance);
+    }
+
+    // Voices might not be loaded yet
+    if (window.speechSynthesis.getVoices().length === 0) {
+        window.speechSynthesis.onvoiceschanged = setFemaleVoice;
+    } else {
+        setFemaleVoice();
+    }
+}
+
+    function startVoiceLoop() {
+        if (!voiceMode) return;
+
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        if (!SpeechRecognition) {
+            addMessage('⚠️ Voice not supported. Please use Chrome!', 'bot');
+            return;
+        }
+
+        const rec = new SpeechRecognition();
+        rec.lang = 'en-US';
+        rec.interimResults = false;
+
+        rec.onresult = async (event) => {
+    const transcript = event.results[0][0].transcript;
+    addMessage(transcript, 'user');
+
+    // Add typing indicator
+    const chatBox = document.getElementById('chat-box');
+    const row = document.createElement('div');
+    row.className = 'message-row';
+    row.id = 'voice-stream-row';
+    row.innerHTML = `
+        <div class="msg-avatar">🤖</div>
+        <div class="msg-content">
+            <div class="msg-name">TAM</div>
+            <div class="message bot-msg" id="voice-stream-msg">
+                <div class="typing-dots">
+                    <span></span><span></span><span></span>
+                </div>
+            </div>
+            <div class="msg-time">${getTime()}</div>
+        </div>
+    `;
+    chatBox.appendChild(row);
+    chatBox.scrollTop = chatBox.scrollHeight;
+
+    try {
+        const res = await fetch('/chat', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                message: transcript,
+                file_content: fileContent
+            })
+        });
+
+        const contentType = res.headers.get('content-type');
+        const streamMsg = document.getElementById('voice-stream-msg');
+        let fullText = '';
+
+        if (contentType && contentType.includes('text/event-stream')) {
+            // Handle streaming response
+            const reader = res.body.getReader();
+            const decoder = new TextDecoder();
+            streamMsg.innerHTML = '';
+
+            while (true) {
+                const { done, value } = await reader.read();
+                if (done) break;
+                const chunk = decoder.decode(value);
+                fullText += chunk;
+                streamMsg.innerHTML = (typeof formatResponse === 'function' ? formatResponse(fullText) : fullText) +
+                    '<button class="copy-btn" onclick="copyText(this)">📋</button>';
+                chatBox.scrollTop = chatBox.scrollHeight;
+            }
+        } else {
+            // Handle non-streaming response
+            const data = await res.json();
+            fullText = data.response;
+            streamMsg.innerHTML = (typeof formatResponse === 'function' ? formatResponse(fullText) : fullText) +
+                '<button class="copy-btn" onclick="copyText(this)">📋</button>';
+        }
+
+        // Clean up row ID
+        const voiceRow = document.getElementById('voice-stream-row');
+        if (voiceRow) voiceRow.removeAttribute('id');
+        const voiceMsg = document.getElementById('voice-stream-msg');
+        if (voiceMsg) voiceMsg.removeAttribute('id');
+
+        // Speak the response
+        speakText(fullText);
+
+        // Wait for speech to finish then listen again
+        const checkDone = setInterval(() => {
+            if (!window.speechSynthesis.speaking) {
+                clearInterval(checkDone);
+                if (voiceMode) startVoiceLoop();
+            }
+        }, 300);
+
+    } catch (err) {
+        document.getElementById('voice-stream-row')?.remove();
+        addMessage('⚠️ Something went wrong. Please try again.', 'bot');
+        // Continue voice loop even after error
+        if (voiceMode) setTimeout(() => startVoiceLoop(), 1000);
+    }
+};
+
+        rec.onerror = () => {
+            if (voiceMode) startVoiceLoop();
+        };
+
+        rec.start();
+    }
+
+    function toggleVoice() {
+        if (!('webkitSpeechRecognition' in window || 'SpeechRecognition' in window)) {
+            alert('Voice input not supported in this browser. Try Chrome!');
+            return;
+        }
+
+        if (listening) {
+            recognition.stop();
+            return;
+        }
+
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        recognition = new SpeechRecognition();
+        recognition.lang = 'en-US';
+        recognition.interimResults = false;
+
+        recognition.onstart = () => {
+            listening = true;
+            document.getElementById('voice-btn').classList.add('listening');
+            document.getElementById('voice-btn').textContent = '🔴';
+        };
+
+        recognition.onresult = (event) => {
+            const transcript = event.results[0][0].transcript;
+            document.getElementById('user-input').value = transcript;
+            sendMessage();
+        };
+
+        recognition.onend = () => {
+            listening = false;
+            document.getElementById('voice-btn').classList.remove('listening');
+            document.getElementById('voice-btn').textContent = '🎤';
+        };
+
+        recognition.start();
+        }
+
+        // Check which AI is active
+        async function checkAIStatus() {
+            try {
+                const res = await fetch('/ai_status');
+                const data = await res.json();
+                const statusEl = document.getElementById('ai-status');
+                if (data.ai === 'gemini') {
+                    statusEl.textContent = '✨ Gemini';
+                    statusEl.style.color = '#4285f4';
+                } else {
+                    statusEl.textContent = '⚡ Groq';
+                    statusEl.style.color = '#f97316';
+                }
+            } catch(e) {}
+        }
+        // Check every 30 seconds
+        setInterval(checkAIStatus, 30000);
+        checkAIStatus();
+
+    </script>
+</body>
+</html>
+</script>
+</body>
+</html>

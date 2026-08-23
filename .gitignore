@@ -1,0 +1,25 @@
+venv/
+.venv/
+
+__pycache__/
+*.py[cod]
+
+.env
+.env.*
+
+.vscode/
+.idea/
+
+*.log
+.cache/
+
+.ipynb_checkpoints/
+
+.DS_Store
+Thumbs.db
+
+# User uploaded files
+uploads/
+
+# Local chatbot database
+data/memory.db

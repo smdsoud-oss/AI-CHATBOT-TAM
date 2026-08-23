@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>TAM Knowledge Admin</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background: #0a0a0f;
+            color: #e0e0ff;
+            padding: 40px;
+            max-width: 750px;
+            margin: 0 auto;
+        }
+        h1 { color: #7aa2f7; margin-bottom: 8px; }
+        p { color: #565f89; margin-bottom: 24px; }
+        .card {
+            background: #0f0f1a;
+            border: 1px solid #1e1e3a;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        h3 { color: #c0caf5; margin-bottom: 12px; }
+        select, input, textarea {
+            width: 100%;
+            padding: 10px;
+            margin: 6px 0 12px;
+            background: #1a1a2e;
+            border: 1px solid #1e1e3a;
+            border-radius: 8px;
+            color: #e0e0ff;
+            font-size: 0.9rem;
+        }
+        .btn {
+            background: linear-gradient(135deg, #4a3aff, #9d4edd);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 0.9rem;
+        }
+        .btn-outline {
+            background: #1a1a2e;
+            border: 1px solid #4a3aff;
+            color: #7aa2f7;
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.9rem;
+        }
+        .btn-danger {
+            background: #ff4444;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.9rem;
+        }
+        .btn-delete {
+            background: #ff4444;
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.8rem;
+            flex-shrink: 0;
+        }
+        .knowledge-item {
+            background: #1a1a2e;
+            padding: 12px;
+            border-radius: 8px;
+            margin: 8px 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 10px;
+        }
+        .knowledge-text { flex: 1; font-size: 0.85rem; }
+        .knowledge-text b { color: #7aa2f7; }
+        #status { color: #34d399; margin-top: 10px; font-size: 0.9rem; }
+        .btn-row { display: flex; gap: 10px; margin-top: 10px; }
+    </style>
+</head>
+<body>
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+    <h1>🧠 TAM Knowledge Admin</h1>
+    <a href="/admin/logout" style="background:#ff4444; color:white; padding:8px 16px; border-radius:8px; text-decoration:none; font-size:0.85rem;">🔓 Logout</a>
+</div>
+    <p>Manage everything TAM knows about Soud</p>
+
+    <!-- Upload File -->
+    <div class="card">
+        <h3>📄 Upload File</h3>
+        <select id="category">
+            <option value="resume">Resume</option>
+            <option value="projects">Projects</option>
+            <option value="skills">Skills</option>
+            <option value="education">Education</option>
+            <option value="experience">Experience</option>
+            <option value="certificates">Certificates</option>
+            <option value="general">General</option>
+        </select>
+        <input type="file" id="fileInput"
+               accept=".pdf,.docx,.doc,.txt,.csv,.xlsx,.pptx"/>
+        <button class="btn" onclick="uploadKnowledge()">
+            Add to TAM's Knowledge
+        </button>
+        <div id="status"></div>
+    </div>
+
+    <!-- Manual Fact -->
+    <div class="card">
+        <h3>✍️ Add Manual Fact</h3>
+        <select id="manualCategory">
+            <option value="about">About Me</option>
+            <option value="skills">Skills</option>
+            <option value="projects">Projects</option>
+            <option value="education">Education</option>
+            <option value="goals">Goals</option>
+        </select>
+        <textarea id="manualText" rows="4"
+                  placeholder="e.g. I am Soud, a pre-final year CS student...">
+        </textarea>
+        <button class="btn" onclick="addManualFact()">Add Fact</button>
+    </div>
+
+    <!-- Knowledge Base List -->
+    <div class="card">
+        <h3>📚 Current Knowledge Base</h3>
+        <div id="knowledgeList">Loading...</div>
+        <div class="btn-row">
+            <button class="btn-outline" onclick="loadKnowledge()">
+                🔄 Refresh
+            </button>
+            <button class="btn-danger" onclick="clearAll()">
+                🗑️ Clear All Knowledge
+            </button>
+        </div>
+    </div>
+
+    <script>
+        // Upload file to knowledge base
+        async function uploadKnowledge() {
+            const fileInput = document.getElementById('fileInput');
+            const category = document.getElementById('category').value;
+            const file = fileInput.files[0];
+            if (!file) {
+                alert('Please select a file first!');
+                return;
+            }
+
+            document.getElementById('status').textContent = '⏳ Uploading...';
+
+            const formData = new FormData();
+            formData.append('file', file);
+            formData.append('category', category);
+
+            try {
+                const res = await fetch('/admin/upload_knowledge', {
+                    method: 'POST',
+                    body: formData
+                });
+                const data = await res.json();
+                document.getElementById('status').textContent =
+                    data.success ? '✅ Added successfully!' : '❌ ' + data.error;
+                fileInput.value = '';
+                loadKnowledge();
+            } catch (err) {
+                document.getElementById('status').textContent = '❌ Upload failed!';
+            }
+        }
+
+        // Add manual fact
+        async function addManualFact() {
+            const category = document.getElementById('manualCategory').value;
+            const text = document.getElementById('manualText').value.trim();
+            if (!text) {
+                alert('Please enter some text!');
+                return;
+            }
+
+            try {
+                const res = await fetch('/admin/add_fact', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ category: category, content: text })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    document.getElementById('manualText').value = '';
+                    loadKnowledge();
+                }
+            } catch (err) {
+                alert('❌ Failed to add fact!');
+            }
+        }
+
+        // Load all knowledge items
+        async function loadKnowledge() {
+            try {
+                const res = await fetch('/admin/knowledge_list');
+                const data = await res.json();
+                const list = document.getElementById('knowledgeList');
+
+                if (data.items.length === 0) {
+                    list.innerHTML = '<p style="color:#565f89; padding:10px;">No knowledge added yet.</p>';
+                    return;
+                }
+
+                list.innerHTML = data.items.map(function(item) {
+                    return '<div class="knowledge-item">' +
+                        '<div class="knowledge-text">' +
+                            '<b>' + item.category + '</b> — ' + item.source + '<br>' +
+                            item.preview + '...' +
+                        '</div>' +
+                        '<button class="btn-delete" onclick="deleteItem(' + item.id + ')">🗑️ Delete</button>' +
+                    '</div>';
+                }).join('');
+
+            } catch (err) {
+                document.getElementById('knowledgeList').innerHTML =
+                    '<p style="color:#ff4444">Failed to load knowledge base.</p>';
+            }
+        }
+
+        // Delete single item
+        async function deleteItem(id) {
+            if (!confirm('Delete this knowledge item?')) return;
+
+            try {
+                const res = await fetch('/admin/delete_item', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ id: id })
+                });
+                const data = await res.json();
+
+                if (data.success) {
+                    loadKnowledge();
+                } else {
+                    alert('❌ Error: ' + data.error);
+                }
+            } catch (err) {
+                alert('❌ Failed to delete!');
+            }
+        }
+
+        // Clear all knowledge
+        async function clearAll() {
+            if (!confirm('Delete ALL knowledge? This cannot be undone!')) return;
+
+            try {
+                await fetch('/admin/clear_knowledge', { method: 'POST' });
+                loadKnowledge();
+            } catch (err) {
+                alert('❌ Failed to clear!');
+            }
+        }
+
+        // Load on page start
+        loadKnowledge();
+    </script>
+</body>
+</html>
