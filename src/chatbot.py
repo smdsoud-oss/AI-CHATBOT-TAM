@@ -10,6 +10,19 @@ from src.knowledge import get_knowledge_summary
 
 load_dotenv()
 
+GROQ_MODELS = [
+    "llama3-70b-8192",
+    "llama-3.1-8b-instant",
+    "mixtral-8x7b-32768",
+    "gemma2-9b-it"
+]
+
+GEMINI_MODELS = [
+    "models/gemini-2.0-flash-lite",
+    "models/gemini-2.0-flash-001",
+    "models/gemini-flash-latest",
+]
+
 # ── API Clients ──
 gemini_client = genai.Client(api_key=os.getenv("GEMINI_API_KEY"))
 groq_client = Groq(api_key=os.getenv("GROQ_API_KEY"))
@@ -163,7 +176,7 @@ def groq_stream(messages, full_system_prompt):
         ]
 
         stream = groq_client.chat.completions.create(
-            model="llama-3.3-70b-versatile",
+            model="llama3-70b-8192",
             messages=full_messages,
             temperature=0.7,
             max_tokens=1000,
