@@ -11,12 +11,11 @@ from src.knowledge import get_knowledge_summary
 load_dotenv()
 
 GROQ_MODELS = [
-    "llama3-70b-8192",
-    "llama-3.1-8b-instant",
-    "mixtral-8x7b-32768",
+    "openai/gpt-oss-120b",
+    "openai/gpt-oss-20b",
+    "qwen/qwen3.6-27b",
     "gemma2-9b-it"
 ]
-
 GEMINI_MODELS = [
     "models/gemini-2.0-flash-lite",
     "models/gemini-2.0-flash-001",
@@ -176,7 +175,7 @@ def groq_stream(messages, full_system_prompt):
         ]
 
         stream = groq_client.chat.completions.create(
-            model="llama3-70b-8192",
+            model="openai/gpt-oss-120b",
             messages=full_messages,
             temperature=0.7,
             max_tokens=1000,
